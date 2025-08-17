@@ -1,38 +1,35 @@
-export interface User {
-  id: string;
-  email: string;
-  name?: string;
-  created_at: string;
-  updated_at: string;
+// Import Prisma types directly to avoid conflicts
+import type { 
+  User as PrismaUser, 
+  Transaction as PrismaTransaction, 
+  Category as PrismaCategory, 
+  FinancialGoal as PrismaFinancialGoal,
+  TransactionType,
+  GoalStatus
+} from '@prisma/client'
+
+// Re-export with aliases
+export type User = PrismaUser
+export type Transaction = PrismaTransaction
+export type Category = PrismaCategory
+export type FinancialGoal = PrismaFinancialGoal
+
+// Additional types that extend Prisma types
+export interface TransactionWithCategoryDetails extends PrismaTransaction {
+  categoryDetails?: PrismaCategory
 }
 
-export interface Transaction {
-  id: string;
-  user_id: string;
-  amount: number;
-  description: string;
-  category: string;
-  type: 'income' | 'expense';
-  date: string;
-  created_at: string;
-  updated_at: string;
+export interface FinancialGoalWithProgress extends PrismaFinancialGoal {
+  progressPercentage: number
+  daysRemaining?: number
 }
 
-export interface Category {
-  id: string;
-  name: string;
-  color: string;
-  icon?: string;
-}
-
-export interface FinancialGoal {
-  id: string;
-  user_id: string;
-  title: string;
-  target_amount: number;
-  current_amount: number;
-  target_date?: string;
-  status: 'active' | 'completed' | 'paused';
-  created_at: string;
-  updated_at: string;
+// Dashboard stats
+export interface DashboardStats {
+  totalIncome: number
+  totalExpenses: number
+  netWorth: number
+  monthlyBudget: number
+  goalsProgress: FinancialGoalWithProgress[]
+  recentTransactions: TransactionWithCategoryDetails[]
 }

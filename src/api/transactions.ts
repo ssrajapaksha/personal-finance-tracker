@@ -1,49 +1,74 @@
-import { supabase } from "@/lib/supabaseClient";
-import { Transaction } from "@/types";
+import { prisma } from "@/lib/prisma";
+import { Transaction, TransactionType } from "@/types";
+
+export interface CreateTransactionData {
+  userId: string;
+  amount: number;
+  description: string;
+  category: string;
+  type: TransactionType;
+  date: Date;
+}
+
+export interface UpdateTransactionData {
+  amount?: number;
+  description?: string;
+  category?: string;
+  type?: TransactionType;
+  date?: Date;
+}
 
 export async function getTransactions(userId: string): Promise<Transaction[]> {
   try {
-    const { data, error } = await supabase
-      .from("transactions")
-      .select("*")
-      .eq("user_id", userId)
-      .order("date", { ascending: false });
-    
-    if (error) throw error;
-    return data || [];
+    const transactions = await prisma.transaction.findMany({
+      where: { userId },
+      orderBy: { date: 'desc' },
+    });
+    return transactions;
   } catch (error) {
     console.error("Failed to fetch transactions:", error);
-    throw new Error("Unable to load transactions");
+    throw new Error("Unable to fetch transactions");
   }
 }
 
-export async function createTransaction(transactionData: Omit<Transaction, 'id' | 'created_at' | 'updated_at'>): Promise<Transaction> {
+export async function getTransaction(id: string): Promise<Transaction | null> {
   try {
-    const { data, error } = await supabase
-      .from("transactions")
-      .insert(transactionData)
-      .select()
-      .single();
-    
-    if (error) throw error;
-    return data;
+    const transaction = await prisma.transaction.findUnique({
+      where: { id },
+    });
+    return transaction;
+  } catch (error) {
+    console.error("Failed to fetch transaction:", error);
+    throw new Error("Unable to fetch transaction");
+  }
+}
+
+export async function createTransaction(data: CreateTransactionData): Promise<Transaction> {
+  try {
+    const transaction = await prisma.transaction.create({
+      data: {
+        userId: data.userId,
+        amount: data.amount,
+        description: data.description,
+        category: data.category,
+        type: data.type,
+        date: data.date,
+      },
+    });
+    return transaction;
   } catch (error) {
     console.error("Failed to create transaction:", error);
     throw new Error("Unable to create transaction");
   }
 }
 
-export async function updateTransaction(id: string, updates: Partial<Transaction>): Promise<Transaction> {
+export async function updateTransaction(id: string, data: UpdateTransactionData): Promise<Transaction> {
   try {
-    const { data, error } = await supabase
-      .from("transactions")
-      .update(updates)
-      .eq("id", id)
-      .select()
-      .single();
-    
-    if (error) throw error;
-    return data;
+    const transaction = await prisma.transaction.update({
+      where: { id },
+      data,
+    });
+    return transaction;
   } catch (error) {
     console.error("Failed to update transaction:", error);
     throw new Error("Unable to update transaction");
@@ -52,14 +77,46 @@ export async function updateTransaction(id: string, updates: Partial<Transaction
 
 export async function deleteTransaction(id: string): Promise<void> {
   try {
-    const { error } = await supabase
-      .from("transactions")
-      .delete()
-      .eq("id", id);
-    
-    if (error) throw error;
+    await prisma.transaction.delete({
+      where: { id },
+    });
   } catch (error) {
     console.error("Failed to delete transaction:", error);
     throw new Error("Unable to delete transaction");
+  }
+}
+
+export async function getTransactionsByCategory(userId: string, category: string): Promise<Transaction[]> {
+  try {
+    const transactions = await prisma.transaction.findMany({
+      where: { 
+        userId,
+        category 
+      },
+      orderBy: { date: 'desc' },
+    });
+    return transactions;
+  } catch (error) {
+    console.error("Failed to fetch transactions by category:", error);
+    throw new Error("Unable to fetch transactions by category");
+  }
+}
+
+export async function getTransactionsByDateRange(userId: string, startDate: Date, endDate: Date): Promise<Transaction[]> {
+  try {
+    const transactions = await prisma.transaction.findMany({
+      where: { 
+        userId,
+        date: {
+          gte: startDate,
+          lte: endDate,
+        }
+      },
+      orderBy: { date: 'desc' },
+    });
+    return transactions;
+  } catch (error) {
+    console.error("Failed to fetch transactions by date range:", error);
+    throw new Error("Unable to fetch transactions by date range");
   }
 }

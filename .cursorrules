@@ -27,6 +27,7 @@ src/
 ├── types/        # TypeScript interfaces/types
 ├── api/          # API abstraction layer - ALL network calls go here
 ├── tests/        # Unit + integration tests
+├── schemas/      # Zod validation schemas
 └── styles/       # Global CSS files
 ```
 
@@ -39,14 +40,9 @@ src/
   // src/api/users.ts
   import { supabase } from "@/lib/supabaseClient";
   import { User } from "@/types";
+  import { CreateUserSchema } from "@/schemas/user";
 
-  export async function getUsers(): Promise<User[]> {
-    const { data, error } = await supabase.from("users").select("*");
-    if (error) throw error;
-    return data;
-  }
-
-  export async function createUser(userData: CreateUserRequest): Promise<User> {
+  export async function createUser(userData: CreateUserSchema): Promise<User> {
     const { data, error } = await supabase
       .from("users")
       .insert(userData)
@@ -57,6 +53,27 @@ src/
   }
   ```
 - This ensures we can replace Supabase later without touching components
+
+## ZOD VALIDATION RULES - NEW
+- Use Zod for ALL form validation and API input validation
+- Create schemas in `src/schemas/` directory
+- Export both the schema and the inferred type
+- Example structure:
+  ```ts
+  // src/schemas/user.ts
+  import { z } from "zod";
+
+  export const CreateUserSchema = z.object({
+    email: z.string().email(),
+    password: z.string().min(8),
+    name: z.string().min(2).optional(),
+  });
+
+  export type CreateUserRequest = z.infer<typeof CreateUserSchema>;
+  ```
+- Use schemas in forms with react-hook-form + @hookform/resolvers/zod
+- Validate API inputs before sending to backend
+- Provide clear error messages for validation failures
 
 ## COMPONENT RULES
 - Keep components small and focused (single responsibility)
@@ -169,93 +186,82 @@ When generating code, you MUST:
 2. **Use API layer** - Never put Supabase calls in components
 3. **Type everything** - All functions, props, and variables must be typed
 4. **Use shadcn/ui** - Import UI components from `@/components/ui/*`
-5. **Keep it minimal** - Don't add extra libraries or files unless asked
-6. **Follow naming conventions** - camelCase for variables, PascalCase for components
-7. **Use absolute imports** - `@/components/...` not `../components/...`
-8. **Add error handling** - Wrap API calls in try/catch blocks
-9. **Keep components clean** - Extract logic into hooks or utils
-10. **Add TypeScript interfaces** - Define types for all data structures
+5. **Use Zod validation** - Create schemas for all form inputs and API requests
+6. **Keep it minimal** - Don't add extra libraries or files unless asked
+7. **Follow naming conventions** - camelCase for variables, PascalCase for components
+8. **Use absolute imports** - `@/components/...` not `../components/...`
+9. **Add error handling** - Wrap API calls in try/catch blocks
+10. **Keep components clean** - Extract logic into hooks or utils
+11. **Add TypeScript interfaces** - Define types for all data structures
 
 ## EXAMPLES OF GOOD PATTERNS
 
-### API Layer Function
+### Zod Schema with API Function
 ```ts
-// src/api/transactions.ts
-import { supabase } from "@/lib/supabaseClient";
-import { Transaction, CreateTransactionRequest } from "@/types";
+// src/schemas/transaction.ts
+import { z } from "zod";
 
-export async function getTransactions(): Promise<Transaction[]> {
+export const CreateTransactionSchema = z.object({
+  amount: z.number().positive(),
+  description: z.string().min(1).max(255),
+  category: z.string().min(1),
+  type: z.enum(['income', 'expense']),
+  date: z.string().datetime(),
+});
+
+export type CreateTransactionRequest = z.infer<typeof CreateTransactionSchema>;
+
+// src/api/transactions.ts
+export async function createTransaction(data: CreateTransactionRequest): Promise<Transaction> {
   try {
-    const { data, error } = await supabase
+    const { data: result, error } = await supabase
       .from("transactions")
-      .select("*")
-      .order("created_at", { ascending: false });
+      .insert(data)
+      .select()
+      .single();
     
     if (error) throw error;
-    return data;
+    return result;
   } catch (error) {
-    console.error("Failed to fetch transactions:", error);
-    throw new Error("Unable to load transactions");
+    console.error("Failed to create transaction:", error);
+    throw new Error("Unable to create transaction");
   }
 }
 ```
 
-### Component with Hook
+### Form with Zod Validation
 ```tsx
-// src/components/TransactionList.tsx
-import { useTransactions } from "@/hooks/useTransactions";
-import { Card } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+// src/components/TransactionForm.tsx
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { CreateTransactionSchema, CreateTransactionRequest } from "@/schemas/transaction";
 
-interface TransactionListProps {
-  userId: string;
-}
+export function TransactionForm() {
+  const form = useForm<CreateTransactionRequest>({
+    resolver: zodResolver(CreateTransactionSchema),
+    defaultValues: {
+      amount: 0,
+      description: "",
+      category: "",
+      type: "expense",
+      date: new Date().toISOString(),
+    },
+  });
 
-export function TransactionList({ userId }: TransactionListProps) {
-  const { transactions, loading, error } = useTransactions(userId);
-
-  if (loading) return <TransactionListSkeleton />;
-  if (error) return <div className="text-red-500">Error: {error}</div>;
+  const onSubmit = async (data: CreateTransactionRequest) => {
+    try {
+      await createTransaction(data);
+      form.reset();
+    } catch (error) {
+      console.error("Failed to create transaction:", error);
+    }
+  };
 
   return (
-    <div className="space-y-2">
-      {transactions.map((transaction) => (
-        <TransactionCard key={transaction.id} transaction={transaction} />
-      ))}
-    </div>
+    <form onSubmit={form.handleSubmit(onSubmit)}>
+      {/* form fields */}
+    </form>
   );
-}
-```
-
-### Custom Hook
-```tsx
-// src/hooks/useTransactions.ts
-import { useState, useEffect } from "react";
-import { getTransactions } from "@/api/transactions";
-import { Transaction } from "@/types";
-
-export function useTransactions(userId: string) {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function fetchTransactions() {
-      try {
-        setLoading(true);
-        const data = await getTransactions();
-        setTransactions(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Unknown error");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchTransactions();
-  }, [userId]);
-
-  return { transactions, loading, error };
 }
 ```
 
@@ -269,6 +275,8 @@ export function useTransactions(userId: string) {
 - ❌ Large components (>200 lines)
 - ❌ Business logic mixed with UI logic
 - ❌ Untyped props or function parameters
+- ❌ Form validation without Zod schemas
+- ❌ API calls without proper error handling
 
 ## PERFORMANCE CONSIDERATIONS
 - Use React.memo for expensive components
