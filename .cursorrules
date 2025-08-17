@@ -1,0 +1,280 @@
+# .cursorrules - Next.js + Supabase Hackathon Team Rules
+# Enforces consistency, clarity, and speed for 3-4 person development team
+
+## CORE PRINCIPLES
+- Prioritize team consistency over personal preferences
+- Keep code simple, readable, and maintainable
+- Move fast but don't break things
+- Separation of concerns: UI logic separate from business logic
+
+## TYPESCRIPT & CODE STYLE
+- Use TypeScript everywhere - no JavaScript files
+- Enforce strict typing (strict: true in tsconfig)
+- Use functional components with hooks only - NO class components
+- Prefer named exports unless default export makes more sense (e.g., page components)
+- Use absolute imports from `src/` - never relative imports beyond parent directory
+- Use async/await - NEVER use .then() or .catch()
+- Follow ESLint + Prettier rules without exception
+- Keep files under 200 lines - split into smaller modules if larger
+
+## FOLDER STRUCTURE - STRICTLY ENFORCE
+```
+src/
+├── app/           # Next.js app router (pages, layouts, routes)
+├── components/    # Reusable UI components (shadcn/ui based)
+├── lib/          # Utilities, Supabase client, helpers, constants
+├── hooks/        # Custom React hooks
+├── types/        # TypeScript interfaces/types
+├── api/          # API abstraction layer - ALL network calls go here
+├── tests/        # Unit + integration tests
+└── styles/       # Global CSS files
+```
+
+## API LAYER RULES - CRITICAL
+- Components and hooks NEVER directly call Supabase, fetch, or axios
+- ALL network/database calls MUST go through functions in `src/api/`
+- Each API file exports typed functions that wrap backend calls
+- Example structure:
+  ```ts
+  // src/api/users.ts
+  import { supabase } from "@/lib/supabaseClient";
+  import { User } from "@/types";
+
+  export async function getUsers(): Promise<User[]> {
+    const { data, error } = await supabase.from("users").select("*");
+    if (error) throw error;
+    return data;
+  }
+
+  export async function createUser(userData: CreateUserRequest): Promise<User> {
+    const { data, error } = await supabase
+      .from("users")
+      .insert(userData)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+  ```
+- This ensures we can replace Supabase later without touching components
+
+## COMPONENT RULES
+- Keep components small and focused (single responsibility)
+- No business logic in components - use custom hooks for complex state
+- Props must be typed with TypeScript interfaces
+- Use composition over inheritance
+- Example component structure:
+  ```tsx
+  interface ComponentProps {
+    // typed props
+  }
+
+  export function ComponentName({ prop }: ComponentProps) {
+    // hooks at top
+    // event handlers
+    // render logic
+    return <div>...</div>;
+  }
+  ```
+
+## SHADCN/UI USAGE
+- Always import shadcn components from `@/components/ui/*`
+- Use Tailwind classes for custom styling - NO inline styles
+- Prefer component composition over rewriting base components
+- Example:
+  ```tsx
+  import { Button } from "@/components/ui/button";
+  
+  // Good - composition
+  <Button className="bg-blue-500 hover:bg-blue-600">Click me</Button>
+  
+  // Bad - inline styles
+  <Button style={{ backgroundColor: 'blue' }}>Click me</Button>
+  ```
+
+## SUPABASE & DATABASE
+- Direct Supabase client calls ONLY in `src/api/` or `src/lib/`
+- Never hardcode API keys - always use process.env
+- Use strongly typed Supabase queries with Database types
+- Define database types in `src/types/database.ts`
+- Example:
+  ```ts
+  // src/types/database.ts
+  export interface Database {
+    public: {
+      Tables: {
+        users: {
+          Row: { id: string; email: string; created_at: string };
+          Insert: { email: string };
+          Update: { email?: string };
+        };
+      };
+    };
+  }
+  ```
+
+## CUSTOM HOOKS
+- Extract reusable logic into custom hooks
+- Hooks should be focused and do one thing well
+- Always start with "use" prefix
+- Return objects with named properties, not arrays
+- Example:
+  ```tsx
+  export function useUsers() {
+    const [users, setUsers] = useState<User[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    return { users, loading, error, refetch };
+  }
+  ```
+
+## TESTING REQUIREMENTS
+- Use Jest + React Testing Library
+- Tests live in `src/tests/` mirroring the file structure
+- Write at least one test for every new component or hook
+- Test behavior, not implementation details
+- Example test structure:
+  ```ts
+  // src/tests/components/Button.test.tsx
+  import { render, screen } from '@testing-library/react';
+  import { Button } from '@/components/Button';
+
+  describe('Button', () => {
+    it('renders with correct text', () => {
+      render(<Button>Click me</Button>);
+      expect(screen.getByText('Click me')).toBeInTheDocument();
+    });
+  });
+  ```
+
+## GIT & COLLABORATION
+- Use Conventional Commits format:
+  - `feat: add user authentication`
+  - `fix: resolve login redirect issue`
+  - `chore: update dependencies`
+  - `docs: update README setup instructions`
+  - `test: add user service tests`
+- Branch naming:
+  - Feature branches: `feature/user-dashboard`
+  - Bug fixes: `fix/login-redirect-bug`
+  - Chores: `chore/update-deps`
+- PRs must have clear descriptions and reference tasks/issues
+- No direct commits to main branch
+
+## CURSOR AI CODE GENERATION RULES
+When generating code, you MUST:
+
+1. **Follow folder structure** - Place files in correct directories
+2. **Use API layer** - Never put Supabase calls in components
+3. **Type everything** - All functions, props, and variables must be typed
+4. **Use shadcn/ui** - Import UI components from `@/components/ui/*`
+5. **Keep it minimal** - Don't add extra libraries or files unless asked
+6. **Follow naming conventions** - camelCase for variables, PascalCase for components
+7. **Use absolute imports** - `@/components/...` not `../components/...`
+8. **Add error handling** - Wrap API calls in try/catch blocks
+9. **Keep components clean** - Extract logic into hooks or utils
+10. **Add TypeScript interfaces** - Define types for all data structures
+
+## EXAMPLES OF GOOD PATTERNS
+
+### API Layer Function
+```ts
+// src/api/transactions.ts
+import { supabase } from "@/lib/supabaseClient";
+import { Transaction, CreateTransactionRequest } from "@/types";
+
+export async function getTransactions(): Promise<Transaction[]> {
+  try {
+    const { data, error } = await supabase
+      .from("transactions")
+      .select("*")
+      .order("created_at", { ascending: false });
+    
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error("Failed to fetch transactions:", error);
+    throw new Error("Unable to load transactions");
+  }
+}
+```
+
+### Component with Hook
+```tsx
+// src/components/TransactionList.tsx
+import { useTransactions } from "@/hooks/useTransactions";
+import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+
+interface TransactionListProps {
+  userId: string;
+}
+
+export function TransactionList({ userId }: TransactionListProps) {
+  const { transactions, loading, error } = useTransactions(userId);
+
+  if (loading) return <TransactionListSkeleton />;
+  if (error) return <div className="text-red-500">Error: {error}</div>;
+
+  return (
+    <div className="space-y-2">
+      {transactions.map((transaction) => (
+        <TransactionCard key={transaction.id} transaction={transaction} />
+      ))}
+    </div>
+  );
+}
+```
+
+### Custom Hook
+```tsx
+// src/hooks/useTransactions.ts
+import { useState, useEffect } from "react";
+import { getTransactions } from "@/api/transactions";
+import { Transaction } from "@/types";
+
+export function useTransactions(userId: string) {
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchTransactions() {
+      try {
+        setLoading(true);
+        const data = await getTransactions();
+        setTransactions(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Unknown error");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchTransactions();
+  }, [userId]);
+
+  return { transactions, loading, error };
+}
+```
+
+## ANTI-PATTERNS TO AVOID
+- ❌ Supabase calls directly in components
+- ❌ Inline styles instead of Tailwind classes
+- ❌ Relative imports beyond parent directory
+- ❌ Class components
+- ❌ .then()/.catch() instead of async/await
+- ❌ Hardcoded values instead of environment variables
+- ❌ Large components (>200 lines)
+- ❌ Business logic mixed with UI logic
+- ❌ Untyped props or function parameters
+
+## PERFORMANCE CONSIDERATIONS
+- Use React.memo for expensive components
+- Implement proper loading states
+- Use Suspense boundaries where appropriate
+- Optimize Supabase queries (select only needed columns)
+- Implement proper error boundaries
+
+Remember: These rules exist to help the team move fast while maintaining code quality. When in doubt, prioritize readability and maintainability over cleverness.
