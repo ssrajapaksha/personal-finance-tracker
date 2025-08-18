@@ -33,6 +33,7 @@ jobs:
       - uses: oNaiPs/secrets-to-env-action@v1
         with:
           secrets: ${{ toJSON(secrets) }}
+      - run: 'echo "Value of $NEXT_PUBLIC_SUPABASE_URL $NEXT_PUBLIC_SUPABASE_ANON_KEY $DATABASE_URL"
 
       - name: npm install and build
         run: |
