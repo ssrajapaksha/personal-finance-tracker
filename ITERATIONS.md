@@ -3,8 +3,8 @@
 ## 🎯 Project Overview
 A comprehensive personal finance management application that helps users track expenses, set financial goals, and gain insights into their spending patterns.
 
-## 📊 **Current Status: Iteration 1 COMPLETE** ✅
-**Foundation & Core Setup**: All user stories and acceptance criteria completed successfully!
+## 📊 **Current Status: Iterations 1 & 2 COMPLETE** ✅
+**Foundation & Core Setup + Transaction Management MVP**: All user stories and acceptance criteria completed successfully!
 
 ---
 
@@ -25,7 +25,7 @@ A comprehensive personal finance management application that helps users track e
 
 ---
 
-## 💳 Iteration 2: Transaction Management MVP (1.5-2 hours)
+## 💳 **Iteration 2: Transaction Management MVP (1.5-2 hours) COMPLETE** ✅
 **Goals**: Enable users to add, view, and manage their financial transactions
 
 ### User Stories
@@ -35,12 +35,12 @@ A comprehensive personal finance management application that helps users track e
 - **As a user, I can** categorize transactions (e.g., Food, Transport, Entertainment, Salary)
 
 ### Acceptance Criteria
-- [ ] Transaction form allows input of amount, description, category, and type (income/expense)
-- [ ] Transaction list displays all entries with proper formatting
-- [ ] Edit and delete buttons work for each transaction
-- [ ] Categories are predefined and selectable from dropdown
-- [ ] Transactions are sorted by date (newest first)
-- [ ] Form validation prevents invalid entries
+- [x] Transaction form allows input of amount, description, category, and type (income/expense)
+- [x] Transaction list displays all entries with proper formatting
+- [x] Edit and delete buttons work for each transaction
+- [x] Categories are predefined and selectable from dropdown
+- [x] Transactions are sorted by date (newest first)
+- [x] Form validation prevents invalid entries
 
 ---
 

@@ -13,6 +13,7 @@ export type User = PrismaUser
 export type Transaction = PrismaTransaction
 export type Category = PrismaCategory
 export type FinancialGoal = PrismaFinancialGoal
+export type { TransactionType, GoalStatus }
 
 // Additional types that extend Prisma types
 export interface TransactionWithCategoryDetails extends PrismaTransaction {

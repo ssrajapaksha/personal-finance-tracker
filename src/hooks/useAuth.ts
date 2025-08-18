@@ -143,7 +143,7 @@ export function useAuth() {
     try {
       setError(null);
       setLoading(true);
-      const user = await signUp(userData);
+      await signUp(userData);
       
       // Wait a moment for Supabase to fully establish the session
       await new Promise(resolve => setTimeout(resolve, 1000));

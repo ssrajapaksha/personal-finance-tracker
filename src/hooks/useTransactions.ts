@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { getTransactions } from "@/api/transactions";
 import { Transaction } from "@/types";
 
 export function useTransactions(userId: string) {
@@ -12,8 +11,13 @@ export function useTransactions(userId: string) {
       try {
         setLoading(true);
         setError(null);
-        const data = await getTransactions(userId);
-        setTransactions(data);
+        const response = await fetch(`/api/transactions?userId=${userId}`);
+        if (response.ok) {
+          const data = await response.json();
+          setTransactions(data);
+        } else {
+          throw new Error('Failed to fetch transactions');
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Unknown error");
       } finally {
@@ -31,8 +35,13 @@ export function useTransactions(userId: string) {
       try {
         setLoading(true);
         setError(null);
-        const data = await getTransactions(userId);
-        setTransactions(data);
+        const response = await fetch(`/api/transactions?userId=${userId}`);
+        if (response.ok) {
+          const data = await response.json();
+          setTransactions(data);
+        } else {
+          throw new Error('Failed to fetch transactions');
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Unknown error");
       } finally {

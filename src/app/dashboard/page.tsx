@@ -1,10 +1,101 @@
+"use client";
+
 import { MainNav } from "@/components/navigation/MainNav";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { BarChart3, Target, Wallet, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useEffect, useState, useCallback } from "react";
+import { Transaction } from "@/types";
+
 
 export default function DashboardPage() {
+  const { user } = useAuth();
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const loadTransactions = useCallback(async () => {
+    try {
+      console.log("Dashboard: Loading transactions for user:", user?.id);
+      setIsLoading(true);
+      if (user) {
+        const response = await fetch(`/api/transactions?userId=${user.id}`);
+        console.log("Dashboard: API response status:", response.status);
+        if (response.ok) {
+          const data = await response.json();
+          console.log("Dashboard: Loaded transactions:", data);
+          console.log("Dashboard: Transaction types:", data.map((t: Transaction) => ({ id: t.id, type: t.type, description: t.description })));
+          setTransactions(data);
+        } else {
+          console.error("Failed to load transactions:", response.status);
+        }
+      } else {
+        console.log("Dashboard: No user, skipping transaction load");
+      }
+    } catch (error) {
+      console.error("Failed to load transactions:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    console.log("Dashboard: useEffect triggered, user:", user);
+    loadTransactions();
+  }, [user, loadTransactions]);
+
+  // Calculate financial metrics
+  const totalIncome = transactions
+    .filter(t => t.type.toLowerCase() === 'income')
+    .reduce((sum, t) => sum + Number(t.amount), 0);
+    
+  const totalExpenses = transactions
+    .filter(t => t.type.toLowerCase() === 'expense')
+    .reduce((sum, t) => sum + Number(t.amount), 0);
+    
+  const currentBalance = totalIncome - totalExpenses;
+  
+  console.log("Dashboard: Financial calculations:", {
+    totalIncome,
+    totalExpenses,
+    currentBalance,
+    transactionCount: transactions.length,
+    transactionTypes: transactions.map(t => t.type),
+    transactionDetails: transactions.map(t => ({
+      id: t.id,
+      type: t.type,
+      amount: t.amount,
+      amountType: typeof t.amount,
+      description: t.description
+    }))
+  });
+  
+  const monthlyIncome = transactions
+    .filter(t => {
+      const transactionDate = new Date(t.date);
+      const now = new Date();
+      return t.type.toLowerCase() === 'income' && 
+             transactionDate.getMonth() === now.getMonth() &&
+             transactionDate.getFullYear() === now.getFullYear();
+    })
+    .reduce((sum, t) => sum + Number(t.amount), 0);
+    
+  const monthlyExpenses = transactions
+    .filter(t => {
+      const transactionDate = new Date(t.date);
+      const now = new Date();
+      return t.type.toLowerCase() === 'expense' && 
+             transactionDate.getMonth() === now.getMonth() &&
+             transactionDate.getFullYear() === now.getFullYear();
+    })
+    .reduce((sum, t) => sum + Number(t.amount), 0);
+
+  // Get recent transactions for the activity feed
+  const recentTransactions = transactions
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 3);
+
   return (
     <div className="min-h-screen bg-background">
         <MainNav />
@@ -29,9 +120,17 @@ export default function DashboardPage() {
                   <DollarSign className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">$2,450.00</div>
+                  <div className="text-2xl font-bold">
+                    {isLoading ? "..." : new Intl.NumberFormat('en-US', {
+                      style: 'currency',
+                      currency: 'USD',
+                    }).format(currentBalance)}
+                  </div>
                   <p className="text-xs text-muted-foreground">
-                    +$180.00 from last month
+                    {isLoading ? "Loading..." : `${totalIncome > totalExpenses ? '+' : ''}${new Intl.NumberFormat('en-US', {
+                      style: 'currency',
+                      currency: 'USD',
+                    }).format(totalIncome - totalExpenses)} total`}
                   </p>
                 </CardContent>
               </Card>
@@ -42,9 +141,14 @@ export default function DashboardPage() {
                   <TrendingDown className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">$1,200.00</div>
+                  <div className="text-2xl font-bold">
+                    {isLoading ? "..." : new Intl.NumberFormat('en-US', {
+                      style: 'currency',
+                      currency: 'USD',
+                    }).format(monthlyExpenses)}
+                  </div>
                   <p className="text-xs text-muted-foreground">
-                    -$50.00 from last month
+                    {isLoading ? "Loading..." : "This month's expenses"}
                   </p>
                 </CardContent>
               </Card>
@@ -55,9 +159,14 @@ export default function DashboardPage() {
                   <TrendingUp className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">$3,650.00</div>
+                  <div className="text-2xl font-bold">
+                    {isLoading ? "..." : new Intl.NumberFormat('en-US', {
+                      style: 'currency',
+                      currency: 'USD',
+                    }).format(monthlyIncome)}
+                  </div>
                   <p className="text-xs text-muted-foreground">
-                    +$200.00 from last month
+                    {isLoading ? "Loading..." : "This month's income"}
                   </p>
                 </CardContent>
               </Card>
@@ -76,9 +185,9 @@ export default function DashboardPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Link href="/transactions/new">
-                    <Button className="w-full">Add Transaction</Button>
-                  </Link>
+                                   <Link href="/transactions">
+                   <Button className="w-full">Add Transaction</Button>
+                 </Link>
                 </CardContent>
               </Card>
 
@@ -127,29 +236,36 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                      <span className="font-medium">Grocery Shopping</span>
+                  {isLoading ? (
+                    <div className="text-center py-4">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto mb-2"></div>
+                      <p className="text-sm text-muted-foreground">Loading transactions...</p>
                     </div>
-                    <span className="text-red-600 font-medium">-$85.50</span>
-                  </div>
-                  
-                  <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span className="font-medium">Salary Deposit</span>
+                  ) : recentTransactions.length === 0 ? (
+                    <div className="text-center py-4">
+                      <p className="text-muted-foreground">No transactions yet</p>
                     </div>
-                    <span className="text-green-600 font-medium">+$3,650.00</span>
-                  </div>
-                  
-                  <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                      <span className="font-medium">Gas Station</span>
-                    </div>
-                    <span className="text-red-600 font-medium">-$45.00</span>
-                  </div>
+                  ) : (
+                    recentTransactions.map((transaction) => (
+                      <div key={transaction.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          <div className={`w-2 h-2 rounded-full ${
+                            transaction.type.toLowerCase() === 'income' ? 'bg-green-500' : 'bg-red-500'
+                          }`}></div>
+                          <span className="font-medium">{transaction.description}</span>
+                        </div>
+                        <span className={`font-medium ${
+                          transaction.type.toLowerCase() === 'income' ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          {transaction.type.toLowerCase() === 'income' ? '+' : '-'}
+                                                     {new Intl.NumberFormat('en-US', {
+                             style: 'currency',
+                             currency: 'USD',
+                           }).format(Number(transaction.amount))}
+                        </span>
+                      </div>
+                    ))
+                  )}
                 </div>
                 
                 <div className="mt-4 text-center">

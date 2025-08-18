@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation"; // Removed unused import
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,7 @@ interface LoginFormProps {
 export function LoginForm({ onSwitchToRegister }: LoginFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { signIn, error, isAuthenticated } = useAuth();
-  const router = useRouter();
+  // const router = useRouter(); // Removed unused router
 
   const form = useForm<LoginRequest>({
     resolver: zodResolver(LoginSchema),

@@ -9,7 +9,7 @@ export async function signUp(userData: RegisterRequest): Promise<User> {
       password: userData.password,
       options: {
         data: {
-          name: userData.name,
+          name: userData.name || null,
         },
       },
     });
