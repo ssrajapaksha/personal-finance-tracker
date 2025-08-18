@@ -24,7 +24,7 @@ export async function signUp(userData: RegisterRequest): Promise<User> {
     return {
       id: data.user.id,
       email: data.user.email!,
-      name: userData.name,
+             name: userData.name || null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };

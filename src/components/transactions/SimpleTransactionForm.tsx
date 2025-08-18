@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface SimpleTransactionFormProps {
-  onSubmit: (data: { amount: number; description: string; category: string; type: string; date: string }) => Promise<void>;
+  onSubmit: (data: { amount: number; description: string; category: string; type: "income" | "expense"; date: string }) => Promise<void>;
   onCancel: () => void;
   isLoading?: boolean;
 }
@@ -17,7 +17,7 @@ export function SimpleTransactionForm({ onSubmit, onCancel, isLoading = false }:
     amount: "",
     description: "",
     category: "",
-    type: "expense",
+    type: "expense" as "income" | "expense",
     date: new Date().toISOString().split('T')[0],
   });
 

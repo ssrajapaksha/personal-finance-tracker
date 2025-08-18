@@ -4,10 +4,13 @@ import { MainNav } from "@/components/navigation/MainNav";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { BarChart3, Target, Wallet, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
+import { BarChart3, Target, Wallet, TrendingUp, TrendingDown, DollarSign, PieChart, LineChart } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState, useCallback } from "react";
 import { Transaction } from "@/types";
+import { SpendingBreakdownChart } from "@/components/dashboard/SpendingBreakdownChart";
+import { MonthlyTrendsChart } from "@/components/dashboard/MonthlyTrendsChart";
+import { FinancialInsights } from "@/components/dashboard/FinancialInsights";
 
 
 export default function DashboardPage() {
@@ -112,28 +115,28 @@ export default function DashboardPage() {
               </p>
             </div>
 
-            {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Balance</CardTitle>
-                  <DollarSign className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {isLoading ? "..." : new Intl.NumberFormat('en-US', {
-                      style: 'currency',
-                      currency: 'USD',
-                    }).format(currentBalance)}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {isLoading ? "Loading..." : `${totalIncome > totalExpenses ? '+' : ''}${new Intl.NumberFormat('en-US', {
-                      style: 'currency',
-                      currency: 'USD',
-                    }).format(totalIncome - totalExpenses)} total`}
-                  </p>
-                </CardContent>
-              </Card>
+                         {/* Quick Stats */}
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+               <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
+                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                   <CardTitle className="text-sm font-medium text-primary">Total Balance</CardTitle>
+                   <DollarSign className="h-4 w-4 text-primary" />
+                 </CardHeader>
+                 <CardContent>
+                   <div className="text-3xl font-bold text-primary">
+                     {isLoading ? "..." : new Intl.NumberFormat('en-US', {
+                       style: 'currency',
+                       currency: 'USD',
+                     }).format(currentBalance)}
+                   </div>
+                   <p className="text-xs text-muted-foreground">
+                     {isLoading ? "Loading..." : `${totalIncome > totalExpenses ? '+' : ''}${new Intl.NumberFormat('en-US', {
+                       style: 'currency',
+                       currency: 'USD',
+                     }).format(totalIncome - totalExpenses)} total`}
+                   </p>
+                 </CardContent>
+               </Card>
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -172,59 +175,68 @@ export default function DashboardPage() {
               </Card>
             </div>
 
-            {/* Quick Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Wallet className="h-5 w-5" />
-                    <span>Add Transaction</span>
-                  </CardTitle>
-                  <CardDescription>
-                    Record a new income or expense
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                                   <Link href="/transactions">
-                   <Button className="w-full">Add Transaction</Button>
-                 </Link>
-                </CardContent>
-              </Card>
+                         {/* Charts and Analytics Section */}
+             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+               <SpendingBreakdownChart transactions={transactions} isLoading={isLoading} />
+               <MonthlyTrendsChart transactions={transactions} isLoading={isLoading} />
+             </div>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Target className="h-5 w-5" />
-                    <span>Set Financial Goal</span>
-                  </CardTitle>
-                  <CardDescription>
-                    Create a new savings target
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Link href="/goals/new">
-                    <Button className="w-full" variant="outline">Create Goal</Button>
-                  </Link>
-                </CardContent>
-              </Card>
+             {/* Financial Insights */}
+             <FinancialInsights transactions={transactions} isLoading={isLoading} />
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <BarChart3 className="h-5 w-5" />
-                    <span>View Analytics</span>
-                  </CardTitle>
-                  <CardDescription>
-                    See detailed spending insights
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Link href="/analytics">
-                    <Button className="w-full" variant="outline">View Reports</Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            </div>
+             {/* Quick Actions */}
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+               <Card>
+                 <CardHeader>
+                   <CardTitle className="flex items-center space-x-2">
+                     <Wallet className="h-5 w-5" />
+                     <span>Add Transaction</span>
+                   </CardTitle>
+                   <CardDescription>
+                     Record a new income or expense
+                   </CardDescription>
+                 </CardHeader>
+                 <CardContent>
+                   <Link href="/transactions">
+                     <Button className="w-full">Add Transaction</Button>
+                   </Link>
+                 </CardContent>
+               </Card>
+
+               <Card>
+                 <CardHeader>
+                   <CardTitle className="flex items-center space-x-2">
+                     <Target className="h-5 w-5" />
+                     <span>Set Financial Goal</span>
+                   </CardTitle>
+                   <CardDescription>
+                     Create a new savings target
+                   </CardDescription>
+                 </CardHeader>
+                 <CardContent>
+                   <Link href="/goals/new">
+                     <Button className="w-full" variant="outline">Create Goal</Button>
+                   </Link>
+                 </CardContent>
+               </Card>
+
+               <Card>
+                 <CardHeader>
+                   <CardTitle className="flex items-center space-x-2">
+                     <BarChart3 className="h-5 w-5" />
+                     <span>View Analytics</span>
+                   </CardTitle>
+                   <CardDescription>
+                     See detailed spending insights
+                   </CardDescription>
+                 </CardHeader>
+                 <CardContent>
+                   <Link href="/analytics">
+                     <Button className="w-full" variant="outline">View Reports</Button>
+                   </Link>
+                 </CardContent>
+               </Card>
+             </div>
 
             {/* Recent Activity */}
             <Card>

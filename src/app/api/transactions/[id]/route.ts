@@ -5,11 +5,12 @@ import { UpdateTransactionSchema } from '@/schemas/transaction';
 // GET /api/transactions/[id] - Get a specific transaction
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const transaction = await prisma.transaction.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!transaction) {
@@ -32,14 +33,15 @@ export async function GET(
 // PUT /api/transactions/[id] - Update a transaction
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await request.json();
     
     // Validate the request data
     const validatedData = UpdateTransactionSchema.parse({
-      id: params.id,
+      id,
       ...body,
     });
     
@@ -47,7 +49,7 @@ export async function PUT(
     const transactionType = validatedData.type ? validatedData.type.toUpperCase() as 'INCOME' | 'EXPENSE' : undefined;
     
     console.log('Updating transaction with data:', {
-      id: params.id,
+      id,
       amount: validatedData.amount,
       description: validatedData.description,
       category: validatedData.category,
@@ -58,7 +60,7 @@ export async function PUT(
     
     // Update the transaction
     const transaction = await prisma.transaction.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         amount: validatedData.amount,
         description: validatedData.description,
@@ -89,11 +91,12 @@ export async function PUT(
 // DELETE /api/transactions/[id] - Delete a transaction
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     await prisma.transaction.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({ success: true });
