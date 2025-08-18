@@ -1,3 +1,6 @@
+// Disable prerendering for this page
+export const dynamic = 'force-dynamic';
+
 import { MainNav } from "@/components/navigation/MainNav";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";

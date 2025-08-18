@@ -1,5 +1,8 @@
 "use client";
 
+// Disable prerendering for this page
+export const dynamic = 'force-dynamic';
+
 import { useState } from "react";
 import { SimpleTransactionForm } from "@/components/transactions/SimpleTransactionForm";
 import { CreateTransactionRequest } from "@/schemas/transaction";
