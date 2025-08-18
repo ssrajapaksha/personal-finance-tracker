@@ -1,5 +1,8 @@
 "use client";
 
+// Disable prerendering for this page
+export const dynamic = 'force-dynamic';
+
 import { useAuth } from "@/hooks/useAuth";
 import { Navbar } from "@/components/navbar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";

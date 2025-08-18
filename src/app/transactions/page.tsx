@@ -1,5 +1,8 @@
 "use client";
 
+// Disable prerendering for this page
+export const dynamic = 'force-dynamic';
+
 import { useState, useEffect, useCallback } from "react";
 import { MainNav } from "@/components/navigation/MainNav";
 import { TransactionForm } from "@/components/transactions/TransactionForm";
