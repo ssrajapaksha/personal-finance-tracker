@@ -30,6 +30,10 @@ jobs:
         with:
           node-version: '22.x'
 
+      - uses: oNaiPs/secrets-to-env-action@v1
+        with:
+          secrets: ${{ toJSON(secrets) }}
+
       - name: npm install and build
         run: |
           npm install
