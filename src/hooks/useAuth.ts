@@ -2,7 +2,23 @@ import { useState, useEffect } from "react";
 import { User } from "@/types";
 import { signIn, signUp, signOut } from "@/api/auth";
 import { LoginRequest, RegisterRequest } from "@/schemas/user";
-import { supabase } from "@/lib/supabaseClient";
+
+// Type for the supabase client
+type SupabaseClient = {
+  auth: {
+    getUser: () => Promise<{ data: { user: unknown } }>;
+    getSession: () => Promise<{ data: { session: { access_token?: string } | null } }>;
+    onAuthStateChange: (callback: (event: string, session: { access_token?: string; user?: unknown } | null) => void) => { data: { subscription: { unsubscribe: () => void } } };
+  };
+};
+
+// Only import supabase in browser environment
+let supabase: SupabaseClient | null = null;
+if (typeof window !== 'undefined') {
+  import('@/lib/supabaseClient').then(module => {
+    supabase = module.supabase;
+  });
+}
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -10,6 +26,12 @@ export function useAuth() {
   const [error, setError] = useState<string | null>(null);
 
   const checkUser = async () => {
+    // Don't run if not in browser or supabase not loaded
+    if (typeof window === 'undefined' || !supabase) {
+      setLoading(false);
+      return;
+    }
+
     try {
       console.log('🔍 checkUser called');
       const { data: { user } } = await supabase.auth.getUser();
@@ -50,12 +72,18 @@ export function useAuth() {
   };
 
   useEffect(() => {
+    // Don't run if not in browser or supabase not loaded
+    if (typeof window === 'undefined' || !supabase) {
+      setLoading(false);
+      return;
+    }
+
     // Check for existing session on mount
     checkUser();
 
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (event: string, session: { access_token?: string; user?: unknown } | null) => {
         console.log('🔍 Auth state change:', event, session ? 'session exists' : 'no session');
         
         if (event === 'SIGNED_IN' && session?.user) {
@@ -90,10 +118,18 @@ export function useAuth() {
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      if (subscription) {
+        subscription.unsubscribe();
+      }
+    };
   }, []);
 
   const handleSignIn = async (credentials: LoginRequest) => {
+    if (typeof window === 'undefined' || !supabase) {
+      throw new Error('Not available in server environment');
+    }
+
     try {
       setError(null);
       setLoading(true);
@@ -140,6 +176,10 @@ export function useAuth() {
   };
 
   const handleSignUp = async (userData: RegisterRequest) => {
+    if (typeof window === 'undefined' || !supabase) {
+      throw new Error('Not available in server environment');
+    }
+
     try {
       setError(null);
       setLoading(true);
@@ -150,6 +190,9 @@ export function useAuth() {
       
       // Create user profile via API route with session token
       try {
+        if (typeof window === 'undefined' || !supabase) {
+          throw new Error('Not available in server environment');
+        }
         const { data: { session } } = await supabase.auth.getSession();
         
         if (!session?.access_token) {
@@ -211,6 +254,10 @@ export function useAuth() {
   };
 
   const updateProfile = async (updates: { name?: string; email?: string }) => {
+    if (typeof window === 'undefined' || !supabase) {
+      throw new Error('Not available in server environment');
+    }
+
     try {
       setError(null);
       const { data: { session } } = await supabase.auth.getSession();

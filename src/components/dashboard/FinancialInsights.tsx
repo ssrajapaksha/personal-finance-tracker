@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, TrendingDown, AlertTriangle, Target, Calendar } from "lucide-react";
+import { TrendingUp, TrendingDown, AlertTriangle, Target } from "lucide-react";
 import { Transaction } from "@/types";
 
 interface FinancialInsightsProps {

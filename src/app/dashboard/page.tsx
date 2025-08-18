@@ -4,7 +4,7 @@ import { MainNav } from "@/components/navigation/MainNav";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { BarChart3, Target, Wallet, TrendingUp, TrendingDown, DollarSign, PieChart, LineChart } from "lucide-react";
+import { BarChart3, Target, Wallet, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState, useCallback } from "react";
 import { Transaction } from "@/types";
