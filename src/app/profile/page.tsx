@@ -1,5 +1,6 @@
 // Disable prerendering for this page
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 import { MainNav } from "@/components/navigation/MainNav";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";

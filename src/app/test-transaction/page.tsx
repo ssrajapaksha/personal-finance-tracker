@@ -2,6 +2,7 @@
 
 // Disable prerendering for this page
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 import { useState } from "react";
 import { SimpleTransactionForm } from "@/components/transactions/SimpleTransactionForm";
